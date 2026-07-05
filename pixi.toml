@@ -1,0 +1,29 @@
+[workspace]
+name = "mirrors-edge-headtracking"
+version = "0.0.0"
+description = "Head tracking for Mirror's Edge (Ultimate ASI Loader, UE3)"
+license = "MIT"
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tasks]
+sync = "git submodule update --remote cameraunlock-core"
+# CMake configures an x86 (Win32) build - Mirror's Edge is a 32-bit UE3 EXE.
+configure = "cmake -S . -B build -A Win32"
+build = { cmd = "cmake --build build --config Release", depends-on = ["configure"] }
+clean = "powershell -NoProfile -Command \"Remove-Item -Recurse -Force build,release -ErrorAction SilentlyContinue\""
+package = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1", depends-on = ["build"] }
+deploy = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1", depends-on = ["build"] }
+install = { cmd = "powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1", depends-on = ["build"] }
+uninstall = "cmd /c scripts\\uninstall.cmd /y"
+# update-deps is a deliberate dev action with a commit attached; no task
+# depends on it - build/package/release consume vendor/ as committed.
+update-deps = "powershell -ExecutionPolicy Bypass -File scripts/update-deps.ps1"
+release = "powershell -ExecutionPolicy Bypass -File scripts/release.ps1"
+# Dev loop: disable/restore the game's Bink movies (logos, cutscenes, loading
+# screens) for faster launches. Use --restore to put them back.
+fast-debug-movies = "powershell -ExecutionPolicy Bypass -File scripts/fast-debug-movies.ps1"
+
+[dependencies]
+cmake = ">=3.20"
+ninja = "*"

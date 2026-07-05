@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6 # v6.0.0
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          if ($tag -notmatch '^v(\d+\.\d+\.\d+)$') {
+            Write-Host "::error::Tag '$tag' is not a valid vMAJOR.MINOR.PATCH version"
+            exit 1
+          }
+          $version = $Matches[1]
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Release version: $version" -ForegroundColor Cyan
+
+      - name: Validate version matches src/version.h
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $line = Select-String -Path 'src/version.h' -Pattern '#define\s+MEHT_VERSION\s+"([0-9]+\.[0-9]+\.[0-9]+)"'
+          if (-not $line) {
+            Write-Host "::error::Could not find MEHT_VERSION in src/version.h"
+            exit 1
+          }
+          $fileVersion = $line.Matches[0].Groups[1].Value
+          if ($fileVersion -ne $version) {
+            Write-Host "::error::Tag version ($version) does not match src/version.h ($fileVersion)"
+            exit 1
+          }
+          Write-Host "Version match confirmed: $version" -ForegroundColor Green
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.9.6 # v0.9.6
+        with:
+          cache: true
+
+      - name: Build and package
+        shell: pwsh
+        run: |
+          Write-Host "Building + packaging release ZIPs..." -ForegroundColor Cyan
+          pixi run package
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Packaging failed"
+            exit 1
+          }
+          Write-Host "Package created" -ForegroundColor Green
+
+      - name: Generate release notes
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File cameraunlock-core/scripts/generate-release-notes.ps1 `
+            -Version '${{ steps.version.outputs.version }}' `
+            -ArtifactPaths 'src/','cameraunlock-core/','scripts/install.cmd','scripts/uninstall.cmd'
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Release notes generation failed"
+            exit 1
+          }
+
+      - name: Find release ZIPs
+        id: zips
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path 'release' -Filter '*-installer.zip' | Select-Object -First 1
+          $nexus = Get-ChildItem -Path 'release' -Filter '*-nexus.zip' | Select-Object -First 1
+          if (-not $installer) {
+            Write-Host "::error::Installer ZIP not found in release/"
+            exit 1
+          }
+          if (-not $nexus) {
+            Write-Host "::error::Nexus ZIP not found in release/"
+            exit 1
+          }
+          "installer=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "nexus=$($nexus.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Installer: $($installer.Name)" -ForegroundColor Green
+          Write-Host "Nexus: $($nexus.Name)" -ForegroundColor Green
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' `
+            --title 'MirrorsEdgeHeadTracking ${{ github.ref_name }}' `
+            --notes-file release-notes.txt `
+            '${{ steps.zips.outputs.installer }}' `
+            '${{ steps.zips.outputs.nexus }}'
+
+      - name: Announce release to Discord
+        shell: pwsh
+        env:
+          DISCORD_RELEASE_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+        run: |
+          if (-not $env:DISCORD_RELEASE_WEBHOOK) {
+            Write-Host "::notice::DISCORD_RELEASE_WEBHOOK not set; skipping Discord announcement."
+            exit 0
+          }
+          $tag  = "${{ github.ref_name }}"
+          $repo = "${{ github.repository }}"
+          $name = (Get-Culture).TextInfo.ToTitleCase(((($repo -split '/')[-1]) -replace '-head-?tracking$','' -replace '-',' '))
+          $url  = "https://github.com/$repo/releases/tag/$tag"
+          $payload = @{
+            username = 'Loopy Releases'
+            embeds   = @(@{
+              title       = "$name Head Tracking $tag"
+              url         = $url
+              description = "A new release of **$name Head Tracking** is live.`n`n**[Download the $tag release]($url)**"
+              color       = 5814783
+            })
+          } | ConvertTo-Json -Depth 5
+          Invoke-RestMethod -Uri $env:DISCORD_RELEASE_WEBHOOK -Method Post -ContentType 'application/json' -Body $payload
+          Write-Host "Announced $tag to Discord."

@@ -1,0 +1,40 @@
+# Build output
+/build/
+/out/
+/release/
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# Vendored loader binaries are committed under vendor/ (release source of truth).
+# Build dependencies fetched at configure time stay out of git.
+
+# Editor / IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Tooling
+.pixi/
+.claude/
+.lab/
+CLAUDE.md
+AGENTS.md
+.mcp.json
+
+# Launcher install state
+.headtracking-state.json
+
+# NexusMods page copy source (not shipped)
+NEXUS_MODS.md
+
+# Ghidra / RE scratch
+/re/
+*.gpr
+*.rep
+*.lock
+!pixi.lock

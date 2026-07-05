@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'assets/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'assets/**'
+
+jobs:
+  build:
+    if: ${{ !startsWith(github.event.head_commit.message, 'Release v') }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6 # v6.0.0
+        with:
+          submodules: recursive
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.9.6 # v0.9.6
+        with:
+          cache: true
+
+      - name: Package installer
+        shell: pwsh
+        run: |
+          Write-Host "Building + packaging installer ZIP..." -ForegroundColor Cyan
+          pixi run package
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Packaging failed"
+            exit 1
+          }
+          Write-Host "Package created" -ForegroundColor Green
+
+      - name: Compute artifact name from ref
+        shell: pwsh
+        run: |
+          $branch = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { $env:GITHUB_REF_NAME }
+          $sanitized = $branch -replace '[^A-Za-z0-9._-]', '-'
+          "ARTIFACT_NAME=MirrorsEdgeHeadTracking-$sanitized" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v7 # v7.0.0
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: release/artifact-contents/
+          retention-days: 14
+          if-no-files-found: error
