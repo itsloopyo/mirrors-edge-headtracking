@@ -34,11 +34,14 @@ Copy-Item $loaderDll (Join-Path $stage 'vendor/ultimate-asi-loader/dinput8.dll')
 Copy-Item (Join-Path $root 'vendor/ultimate-asi-loader/LICENSE') (Join-Path $stage 'vendor/ultimate-asi-loader/LICENSE') -Force
 Copy-Item (Join-Path $root 'vendor/ultimate-asi-loader/README.md') (Join-Path $stage 'vendor/ultimate-asi-loader/README.md') -Force
 
-# Scripts + docs. No .ps1 ships in the installer ZIP: this is a manifest-mode
-# package (the launcher deploys via launcher-manifest.json). install.cmd is a
-# manual fallback and takes an explicit GAME_PATH; it does not ship a shim.
+# Scripts + docs. install.cmd / uninstall.cmd resolve the game via
+# shared/find-game.ps1 even when a GAME_PATH is passed explicitly (the shim
+# validates it and emits GAME_EXE / GAME_EXE_RELPATH), so the shared bundle
+# must ship or the scripts fail on startup.
 Copy-Item (Join-Path $root 'scripts/install.cmd') $stage -Force
 Copy-Item (Join-Path $root 'scripts/uninstall.cmd') $stage -Force
+Import-Module (Join-Path $root 'cameraunlock-core/powershell/ReleaseWorkflow.psm1') -Force
+Copy-SharedBundle -StagingDir $stage
 foreach ($doc in 'README.md','LICENSE','CHANGELOG.md','THIRD-PARTY-NOTICES.md') {
     Copy-Item (Join-Path $root $doc) $stage -Force
 }
