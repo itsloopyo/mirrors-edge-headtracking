@@ -10,7 +10,7 @@ Refresh manually with `pixi run update-deps`, then commit.
 - Commit: `ab722befd52581a34449b603926cfab476e66b05`
 - Asset: `Ultimate-ASI-Loader.zip`
 - dinput8.dll SHA-256: `c7277e832f6f07af64903a99ecebab2936260cbf55eda70787c5d7b2d5b9fe60`
-- Fetched at: 2026-07-05T13:42:33.0256294+01:00
+- Fetched at: 2026-08-03T20:14:01.2905962+01:00
 
 `dinput8.dll` is extracted from the upstream x86 zip untouched. install.cmd copies it
 into the Mirror's Edge exe dir as the ASI proxy slot the game loads.

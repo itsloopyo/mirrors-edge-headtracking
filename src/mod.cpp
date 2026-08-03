@@ -190,9 +190,6 @@ void Phase1Loop() {
             log::Line("[udp] tracker %s (remote=%s)",
                       connected ? "CONNECTED" : "disconnected",
                       g_receiver.IsRemoteConnection() ? "yes" : "no");
-            // Center on the fresh connection so the initial view isn't offset by
-            // the tracker's absolute head angle.
-            if (connected) g_session.Recenter();
             wasConnected = connected;
         }
 
