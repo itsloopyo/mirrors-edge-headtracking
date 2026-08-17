@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "mod_info": {
+    "name": "MirrorsEdgeHeadTracking",
+    "version": "0.0.0",
+    "game_id": "mirrors-edge"
+  },
+  "strategy": "AsiLoader",
+  "delivery_mode": "manifest",
+
+  "loader": {
+    "seed": [
+      {
+        "target": "Binaries/MirrorsEdgeHeadTracking.ini",
+        "content_b64": "OyBNaXJyb3IncyBFZGdlIEhlYWQgVHJhY2tpbmcgY29uZmlndXJhdGlvbi4KOyBQbGFjZSBuZXh0IHRvIE1pcnJvcnNFZGdlLmV4ZSAodGhlIGdhbWUncyBCaW5hcmllcyBmb2xkZXIpLiBBbGwga2V5cyBhcmUKOyBvcHRpb25hbCAtIGFueSBtaXNzaW5nIGtleSB1c2VzIHRoZSBkZWZhdWx0IHNob3duLgoKW05ldHdvcmtdCjsgT3BlblRyYWNrIFVEUCBwb3J0IChPcGVuVHJhY2sgIlVEUCBvdmVyIG5ldHdvcmsiIG91dHB1dCkuClBvcnQ9NDI0MgoKW0dlbmVyYWxdCkVuYWJsZU9uU3RhcnR1cD10cnVlCjsgSGVhZCBtb3ZlcyB0aGUgdmlldzsgbW91c2Ugc3RpbGwgYWltcy4gTGVhdmUgb24uCkFpbURlY291cGxpbmc9dHJ1ZQpTaG93UmV0aWNsZT10cnVlCkRhdGFGcmVzaG5lc3NNcz01MDAKCltSb3RhdGlvbl0KWWF3U2Vuc2l0aXZpdHk9MS4wClBpdGNoU2Vuc2l0aXZpdHk9MS4wClJvbGxTZW5zaXRpdml0eT0xLjAKSW52ZXJ0WWF3PWZhbHNlCkludmVydFBpdGNoPWZhbHNlCkludmVydFJvbGw9ZmFsc2UKOyBTbW9vdGhpbmcgaXMgcGlja2VkIHBlciBjb25uZWN0aW9uIGZyb20gdGhlIHBhY2tldCBzb3VyY2UgYWRkcmVzcywgYW5kIGNvdmVycwo7IHJvdGF0aW9uIGFuZCBwb3NpdGlvbiBhbGlrZS4gMC4wID0gbm8gc21vb3RoaW5nLCAxLjAgPSBoZWF2eS4KOyBMb2NhbFNtb290aGluZzogIHRyYWNrZXIgcnVucyBvbiB0aGlzIG1hY2hpbmUgKGxvb3BiYWNrKS4KOyBSZW1vdGVTbW9vdGhpbmc6IHRyYWNrZXIgaXMgYSByZW1vdGUgZGV2aWNlIG9uIHRoZSBuZXR3b3JrLgpMb2NhbFNtb290aGluZz0wLjAKUmVtb3RlU21vb3RoaW5nPTAuMTUKCltQb3NpdGlvbl0KOyBQb3NpdGlvbkVuYWJsZWQgc2V0cyB0aGUgc3RhcnR1cCBtb2RlOiB0cnVlID0gcm90YXRpb24gKyBwb3NpdGlvbiwgZmFsc2UgPQo7IHJvdGF0aW9uIG9ubHkuIFRoZSBDeWNsZSBNb2RlIGhvdGtleSByb3RhdGVzIHRocm91Z2ggNkRPRiAtPiByb3RhdGlvbiBvbmx5IC0+CjsgcG9zaXRpb24gb25seS4KUG9zaXRpb25FbmFibGVkPXRydWUKUG9zaXRpb25TZW5zaXRpdml0eVg9MS4wClBvc2l0aW9uU2Vuc2l0aXZpdHlZPTEuMApQb3NpdGlvblNlbnNpdGl2aXR5Wj0xLjAKSW52ZXJ0UG9zaXRpb25YPXRydWUKSW52ZXJ0UG9zaXRpb25ZPWZhbHNlCkludmVydFBvc2l0aW9uWj1mYWxzZQo7IFVucmVhbCB1bml0cyBwZXIgbWV0ZXIgb2YgaGVhZCBtb3ZlbWVudC4gTGFyZ2VyID0gYmlnZ2VyIGxlYW4vcGVlayBmb3IgdGhlIHNhbWUKOyBwaHlzaWNhbCBtb3Rpb24uIE1pcnJvcidzIEVkZ2Ugd29ybGQgc2NhbGUgaXMgfjIgY20gcGVyIHVuaXQuClBvc2l0aW9uU2NhbGVVVT01MC4wCgpbSG90a2V5c10KOyBXaW5kb3dzIHZpcnR1YWwta2V5IGNvZGVzIChoZXgpLiBEZWZhdWx0cyBhcmUgdGhlIG5hdiBjbHVzdGVyLgpSZWNlbnRlcj0weDI0ClRvZ2dsZVRyYWNraW5nPTB4MjMKOyBDeWNsZSB0cmFja2luZyBtb2RlOiA2RE9GIC0+IHJvdGF0aW9uIG9ubHkgLT4gcG9zaXRpb24gb25seS4KQ3ljbGVNb2RlPTB4MjEKVG9nZ2xlWWF3TW9kZT0weDIyCg=="
+      }
+    ]
+  },
+
+  "files": [
+    {
+      "source": "vendor/ultimate-asi-loader/dinput8.dll",
+      "target": "Binaries/dinput8.dll",
+      "backup": true
+    },
+    {
+      "source": "plugins/MirrorsEdgeHeadTracking.asi",
+      "target": "Binaries/MirrorsEdgeHeadTracking.asi"
+    }
+  ],
+
+  "runtime_requirements": [],
+  "dependencies": []
+}

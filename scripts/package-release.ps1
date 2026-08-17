@@ -46,28 +46,22 @@ foreach ($doc in 'README.md','LICENSE','CHANGELOG.md','THIRD-PARTY-NOTICES.md') 
     Copy-Item (Join-Path $root $doc) $stage -Force
 }
 
-# launcher-manifest.json (manifest delivery mode). The default INI is seeded only
-# when absent so user config is never clobbered; loader archives/detect are empty
-# (the ASI loader DLL is deployed via files[], renamed to the dinput8 proxy).
+# launcher-manifest.json (manifest delivery mode) is committed at the repo root;
+# packaging stamps mod_info.version and the seeded INI so the shipped manifest can
+# never disagree with the built .asi or the default config that ships beside it.
+# Stamp via raw-text replacement, not a ConvertTo-Json round-trip: PowerShell 5.1's
+# ConvertTo-Json unwraps single-element arrays (seed), which corrupts the manifest.
+$manifestSrc = Join-Path $root 'launcher-manifest.json'
+if (-not (Test-Path $manifestSrc)) { throw "launcher-manifest.json not found at: $manifestSrc" }
 $iniB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $root 'assets/MirrorsEdgeHeadTracking.ini')))
-$manifest = [ordered]@{
-    schema_version = 2
-    mod_info = [ordered]@{ name = 'MirrorsEdgeHeadTracking'; version = $version; game_id = 'mirrors-edge' }
-    strategy = 'AsiLoader'
-    delivery_mode = 'manifest'
-    loader = [ordered]@{
-        archives = @()
-        detect = @()
-        seed = @(@{ target = 'Binaries/MirrorsEdgeHeadTracking.ini'; content_b64 = $iniB64 })
-    }
-    files = @(
-        [ordered]@{ source = 'vendor/ultimate-asi-loader/dinput8.dll'; target = 'Binaries/dinput8.dll' }
-        [ordered]@{ source = 'plugins/MirrorsEdgeHeadTracking.asi'; target = 'Binaries/MirrorsEdgeHeadTracking.asi' }
-    )
-    runtime_requirements = @()
-    dependencies = @()
-}
-$manifest | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $stage 'launcher-manifest.json') -Encoding UTF8
+$manifestText = Get-Content $manifestSrc -Raw
+$manifestText = $manifestText -replace '("version":\s*")[^"]*(")', "`${1}$version`${2}"
+$manifestText = $manifestText -replace '("content_b64":\s*")[^"]*(")', "`${1}$iniB64`${2}"
+[IO.File]::WriteAllText(
+    (Join-Path $stage 'launcher-manifest.json'),
+    $manifestText,
+    (New-Object System.Text.UTF8Encoding $false))
+Write-Host "launcher-manifest.json (v$version)" -ForegroundColor Green
 
 # Zip: installer (full tree) + Nexus (deploy subtree only).
 $installerZip = Join-Path $rel "MirrorsEdgeHeadTracking-v$version-installer.zip"
