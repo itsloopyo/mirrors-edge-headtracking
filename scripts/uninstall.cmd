@@ -25,7 +25,7 @@
 :: --- CONFIG BLOCK ---
 set "GAME_ID=mirrors-edge"
 set "MOD_DISPLAY_NAME=Mirror's Edge Head Tracking"
-set "MOD_DLLS=MirrorsEdgeHeadTracking.asi MirrorsEdgeHeadTracking.ini"
+set "MOD_DLLS=MirrorsEdgeHeadTracking.asi MirrorsEdgeHeadTracking.ini MirrorsEdgeHeadTracking.log MirrorsEdgeHeadTracking.prev.log"
 set "MOD_INTERNAL_NAME=MirrorsEdgeHeadTracking"
 set "STATE_FILE=.headtracking-state.json"
 set "FRAMEWORK_TYPE=ASILoader"

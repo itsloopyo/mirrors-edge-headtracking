@@ -66,7 +66,6 @@ Two equivalent binding sets. Use whichever your keyboard has.
 
 | Action               | Nav-cluster | Chord          |
 |----------------------|-------------|----------------|
-| Recenter             | `Home`      | `Ctrl+Shift+T` |
 | Toggle tracking      | `End`       | `Ctrl+Shift+Y` |
 | Cycle tracking mode  | `Page Up`   | `Ctrl+Shift+G` |
 | Toggle yaw mode      | `Page Down` | `Ctrl+Shift+H` |
@@ -77,7 +76,7 @@ Yaw mode switches head yaw between local (relative to where the camera points) a
 
 ## Configuration
 
-The mod reads `MirrorsEdgeHeadTracking.ini` from the game's `Binaries` folder (next to `MirrorsEdge.exe`). Any missing key uses the default shown. All sensitivities default to 1.0; smoothing defaults to 0.0 with an internal 0.15 floor that prevents jitter on high-refresh displays.
+The mod reads `MirrorsEdgeHeadTracking.ini` from the game's `Binaries` folder (next to `MirrorsEdge.exe`). Any missing key uses the default shown. All sensitivities default to 1.0. Smoothing is two keys picked per connection from the packet source address, covering rotation and position alike: `LocalSmoothing` (default `0.0`) for a tracker running on this PC, and `RemoteSmoothing` (default `0.15`) for a tracker on a remote network device.
 
 ```ini
 [Network]
@@ -107,8 +106,12 @@ RollSensitivity=1.0
 InvertYaw=false
 InvertPitch=false
 InvertRoll=false
-; 0.0 = responsive (internal 0.15 baseline floor), 1.0 = heavy smoothing.
-Smoothing=0.0
+; Smoothing is picked per connection from the packet source address, and covers
+; rotation and position alike. 0.0 = no smoothing, 1.0 = heavy.
+; LocalSmoothing:  tracker runs on this machine (loopback).
+; RemoteSmoothing: tracker is a remote device on the network.
+LocalSmoothing=0.0
+RemoteSmoothing=0.15
 
 [Position]
 ; PositionEnabled sets the startup mode: true = rotation + position, false =
@@ -118,7 +121,6 @@ PositionEnabled=true
 PositionSensitivityX=1.0
 PositionSensitivityY=1.0
 PositionSensitivityZ=1.0
-PositionSmoothing=0.15
 InvertPositionX=true
 InvertPositionY=false
 InvertPositionZ=false
@@ -128,7 +130,6 @@ PositionScaleUU=50.0
 
 [Hotkeys]
 ; Windows virtual-key codes (hex). Defaults are the nav cluster.
-Recenter=0x24
 ToggleTracking=0x23
 ; Cycle tracking mode: 6DOF -> rotation only -> position only.
 CycleMode=0x21
@@ -146,8 +147,11 @@ ToggleYawMode=0x22
 - If there is no `[udp] tracker CONNECTED` line in the log, verify the tracker's IP and port and that Windows Firewall allows UDP on port 4242.
 
 **Jittery or unstable tracking**
-- Raise `Smoothing` in the INI toward 1.0.
+- Raise `LocalSmoothing` (tracker on this PC) or `RemoteSmoothing` (tracker on the network) in the INI toward 1.0.
 - On a wireless or WiFi tracker, expect some latency; a small amount of smoothing settles it.
+
+**View sits off centre**
+- Centre it in your tracker app. OpenTrack has a `Center` bind, SteamVR has its own recentre, and Headcam has a CENTER button. The mod applies what the tracker sends and keeps no centre of its own.
 
 **Wrong yaw at extreme angles**
 - Toggle between world-locked and camera-local yaw with `Page Down` (or `Ctrl+Shift+H`). World-locked (default) is horizon-stable; camera-local follows the camera's current up axis.

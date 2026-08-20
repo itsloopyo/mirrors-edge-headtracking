@@ -22,7 +22,6 @@
 
 #include "cameraunlock/diagnostics/crash_handler.h"
 #include "cameraunlock/input/chord_hotkeys.h"
-#include "cameraunlock/input/deferred_actions.h"
 #include "cameraunlock/input/hotkey_poller.h"
 #include "cameraunlock/logging/file_log.h"
 #include "cameraunlock/memory/pe_fingerprint.h"
@@ -36,19 +35,22 @@ namespace log = cameraunlock::logging;
 namespace input = cameraunlock::input;
 namespace mem = cameraunlock::memory;
 
-// T/Y/G/H from the doctrine chord cluster.
-constexpr int kVkT = 0x54;
+// Y/G/H from the doctrine chord cluster.
 constexpr int kVkY = 0x59;
 constexpr int kVkG = 0x47;
 constexpr int kVkH = 0x48;
 
 Config g_config;
 cameraunlock::UdpReceiver g_receiver;
-cameraunlock::HeadTrackingSession<cameraunlock::UdpReceiver> g_session{g_receiver};
+using Session = cameraunlock::HeadTrackingSession<cameraunlock::UdpReceiver>;
+Session g_session{g_receiver};
+// Without this the session would silently report every tracker as local and pin
+// smoothing to LocalSmoothing forever, with no compile error.
+static_assert(Session::kHasRemoteConnection,
+              "receiver must expose IsRemoteConnection() for per-connection smoothing");
 input::HotkeyPoller g_hotkeys;
 
 std::atomic<bool> g_trackingEnabled{true};
-input::DeferredAction g_recenterRequest;
 
 std::thread g_loopThread;
 std::atomic<bool> g_stop{false};
@@ -80,8 +82,6 @@ bool InGameplay() {
     return (ci.flags & CURSOR_SHOWING) == 0;
 }
 
-void OnRecenter() { g_recenterRequest.Request(); }
-
 void OnToggleTracking() {
     bool now = !g_trackingEnabled.load();
     g_trackingEnabled.store(now);
@@ -111,13 +111,11 @@ void OnToggleYawMode() {
 void RegisterHotkeys() {
     // Nav-cluster keys, guarded so the chord path is the sole trigger for
     // Ctrl+Shift combos.
-    g_hotkeys.AddHotkey(g_config.KeyRecenter, input::NavGuarded(OnRecenter));
     g_hotkeys.AddHotkey(g_config.KeyToggleTracking, input::NavGuarded(OnToggleTracking));
     g_hotkeys.AddHotkey(g_config.KeyCycleMode, input::NavGuarded(OnCycleMode));
     g_hotkeys.AddHotkey(g_config.KeyToggleYawMode, input::NavGuarded(OnToggleYawMode));
 
-    // Ctrl+Shift chord alternatives (T/Y/G/H cluster).
-    g_hotkeys.AddHotkey(kVkT, input::ChordGuarded(OnRecenter));
+    // Ctrl+Shift chord alternatives (Y/G/H cluster).
     g_hotkeys.AddHotkey(kVkY, input::ChordGuarded(OnToggleTracking));
     g_hotkeys.AddHotkey(kVkG, input::ChordGuarded(OnCycleMode));
     g_hotkeys.AddHotkey(kVkH, input::ChordGuarded(OnToggleYawMode));
@@ -171,19 +169,14 @@ void LogFingerprint() {
 void Phase1Loop() {
     bool wasConnected = false;
     bool wasInGameplay = false;
-    unsigned frames = 0;  // unsigned so the periodic-log counter wraps cleanly
     auto lastTick = std::chrono::steady_clock::now();
+    auto lastBeat = lastTick;
     while (!g_stop.load()) {
         camera_probe::Poll();
 
         auto nowTick = std::chrono::steady_clock::now();
         float dt = std::chrono::duration<float>(nowTick - lastTick).count();
         lastTick = nowTick;
-
-        if (g_recenterRequest.Consume()) {
-            g_session.Recenter();
-            log::Line("[action] recenter applied");
-        }
 
         bool connected = g_receiver.IsReceiving();
         if (connected != wasConnected) {
@@ -195,16 +188,16 @@ void Phase1Loop() {
 
         // Drive the camera hook: run the full tracking pipeline and enable
         // injection only while tracking is on, data is live, and we're in gameplay
-        // (not a menu). Recenter when returning to gameplay so the view starts
-        // neutral.
         bool inGameplay = InGameplay();
         if (inGameplay != wasInGameplay) {
             log::Line("[state] %s", inGameplay ? "gameplay (tracking active)"
                                                : "menu (tracking suppressed)");
-            if (inGameplay) g_session.Recenter();
             wasInGameplay = inGameplay;
         }
 
+        // Update() re-reads the receiver's connection locality every tick, so
+        // swapping a local OpenTrack instance for a phone on WiFi picks up the
+        // other smoothing parameter without restarting the game.
         g_session.Update(dt);
 
         bool track = g_trackingEnabled.load() && connected && inGameplay;
@@ -228,15 +221,21 @@ void Phase1Loop() {
                 camera_hook::SetPositionEnabled(false);
             }
 
-            if ((frames % 240) == 0)
+            // Wall-clock, not a tick count: this loop asks for an 8ms sleep but
+            // the default scheduler granularity makes the real tick 15-16ms, so
+            // a frame-gated period ran at roughly twice the interval it claimed.
+            // Timing it also means a tick that lands in a menu, where this branch
+            // is skipped, cannot swallow a whole period.
+            if (nowTick - lastBeat >= std::chrono::seconds(30)) {
+                lastBeat = nowTick;
                 log::Line("[udp] pose yaw=%.2f pitch=%.2f roll=%.2f pos=(%.3f,%.3f,%.3f)m",
                           y, p, r, ox, oy, oz);
+            }
         } else {
             camera_hook::SetHeadRotationDegrees(0.0f, 0.0f, 0.0f);
             camera_hook::SetPositionEnabled(false);
         }
 
-        ++frames;
         std::this_thread::sleep_for(std::chrono::milliseconds(8));
     }
 }
@@ -245,17 +244,32 @@ void Phase1Loop() {
 
 void Start() {
     const std::wstring dir = ExeDir();
-    log::Open(dir + L"" MEHT_MOD_NAME L".log");
+    // The crash handler below writes into this log and log::Open truncates, so
+    // the session worth reading is usually the one that just crashed and the
+    // user relaunched before sending the file. Keep one generation.
+    const std::wstring logPath = dir + L"" MEHT_MOD_NAME L".log";
+    DWORD rotateErr = 0;
+    if (!MoveFileExW(logPath.c_str(), (dir + L"" MEHT_MOD_NAME L".prev.log").c_str(),
+                     MOVEFILE_REPLACE_EXISTING)) {
+        rotateErr = GetLastError();
+        if (rotateErr == ERROR_FILE_NOT_FOUND) rotateErr = 0;
+    }
+    log::Open(logPath);
     log::Line("=== %s v%s loaded ===", MEHT_MOD_NAME, MEHT_VERSION);
+    if (rotateErr != 0) {
+        log::Line("WARNING: could not rotate the previous log to .prev.log (error %lu)",
+                  rotateErr);
+    }
 
     cameraunlock::diagnostics::InstallCrashHandler();
     LogFingerprint();
 
     const std::string ini = ToUtf8(dir) + MEHT_MOD_NAME ".ini";
     g_config.Load(ini);
-    log::Line("[config] port=%u enableOnStartup=%d aimDecouple=%d smoothing=%.2f worldYaw=%d",
-              g_config.Port, g_config.EnableOnStartup, g_config.AimDecoupling, g_config.Smoothing,
-              g_config.WorldSpaceYaw);
+    log::Line("[config] port=%u enableOnStartup=%d aimDecouple=%d localSmoothing=%.2f "
+              "remoteSmoothing=%.2f worldYaw=%d",
+              g_config.Port, g_config.EnableOnStartup, g_config.AimDecoupling,
+              g_config.LocalSmoothing, g_config.RemoteSmoothing, g_config.WorldSpaceYaw);
 
     // Remove the game's ~60 fps cap by disabling UE3's frame-rate smoother in the
     // runtime TdEngine.ini. Done as early as possible so the write lands before the
@@ -276,17 +290,21 @@ void Start() {
     sens.invert_pitch = g_config.InvertPitch;
     sens.invert_roll = g_config.InvertRoll;
     g_session.GetProcessor().SetSensitivity(sens);
-    g_session.GetProcessor().SetSmoothing(g_config.Smoothing);
 
     cameraunlock::PositionSettings psens = g_session.GetPositionProcessor().GetSettings();
     psens.sensitivity_x = g_config.PositionSensitivityX;
     psens.sensitivity_y = g_config.PositionSensitivityY;
     psens.sensitivity_z = g_config.PositionSensitivityZ;
-    psens.smoothing = g_config.PositionSmoothing;
     psens.invert_x = g_config.InvertPositionX;
     psens.invert_y = g_config.InvertPositionY;
     psens.invert_z = g_config.InvertPositionZ;
     g_session.GetPositionProcessor().SetSettings(psens);
+
+    // Both smoothing values go into both processors; which one applies is
+    // decided per frame from the packet source address inside Update(). Set
+    // after SetSettings, which would otherwise overwrite the position pair.
+    g_session.SetLocalSmoothing(g_config.LocalSmoothing);
+    g_session.SetRemoteSmoothing(g_config.RemoteSmoothing);
 
     g_session.SetMode(g_config.PositionEnabled
                           ? cameraunlock::TrackingMode::RotationAndPosition

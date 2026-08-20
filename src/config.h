@@ -7,7 +7,7 @@ namespace meht {
 
 // Mod configuration, loaded from MirrorsEdgeHeadTracking.ini next to the game
 // EXE. Defaults follow the CameraUnlock doctrine (all sensitivities 1.0,
-// smoothing 0.0 with the 0.15 baseline floor applied in processing).
+// LocalSmoothing 0.0, RemoteSmoothing 0.15).
 struct Config {
     // Network
     uint16_t Port = 4242;
@@ -36,7 +36,10 @@ struct Config {
     bool InvertYaw = false;
     bool InvertPitch = false;
     bool InvertRoll = false;
-    float Smoothing = 0.0f;
+    // Which of the two applies is decided per connection from the packet source
+    // address, and covers rotation and position alike.
+    float LocalSmoothing = 0.0f;
+    float RemoteSmoothing = 0.15f;
 
     // Position (6DOF). PositionEnabled selects the startup tracking mode: true =
     // rotation + position, false = rotation only. The Cycle Mode hotkey then
@@ -45,7 +48,6 @@ struct Config {
     float PositionSensitivityX = 1.0f;
     float PositionSensitivityY = 1.0f;
     float PositionSensitivityZ = 1.0f;
-    float PositionSmoothing = 0.15f;
     bool InvertPositionX = true;
     bool InvertPositionY = false;
     bool InvertPositionZ = false;
@@ -55,7 +57,6 @@ struct Config {
     float PositionScaleUU = 50.0f;
 
     // Hotkeys (Windows virtual key codes). Nav-cluster defaults per doctrine.
-    int KeyRecenter = 0x24;       // Home
     int KeyToggleTracking = 0x23; // End
     int KeyCycleMode = 0x21;      // Page Up - cycle 6DOF / rotation / position
     int KeyToggleYawMode = 0x22;  // Page Down
