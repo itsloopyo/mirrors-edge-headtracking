@@ -73,6 +73,17 @@ New-Item -ItemType Directory -Path $nexusStage -Force | Out-Null
 Copy-Item (Join-Path $stage 'plugins/MirrorsEdgeHeadTracking.asi') $nexusStage -Force
 Copy-Item (Join-Path $stage 'plugins/MirrorsEdgeHeadTracking.ini') $nexusStage -Force
 $nexusZip = Join-Path $rel "MirrorsEdgeHeadTracking-v$version-nexus.zip"
+# The Nexus ZIP is a binary distribution too: the licences of everything
+# compiled into or bundled with the payload require their notices to travel
+# with it, so LICENSE and THIRD-PARTY-NOTICES.md ship at its root.
+foreach ($noticeDoc in @('LICENSE', 'THIRD-PARTY-NOTICES.md', 'README.md')) {
+    $noticeSrc = Join-Path $root $noticeDoc
+    if (-not (Test-Path $noticeSrc)) {
+        throw "Required notice file not found: $noticeDoc. Every published ZIP is a binary distribution and must carry it."
+    }
+    Copy-Item $noticeSrc -Destination $nexusStage -Force
+    Write-Host "  $noticeDoc" -ForegroundColor Green
+}
 Compress-Archive -Path (Join-Path $nexusStage '*') -DestinationPath $nexusZip -Force
 Remove-Item $nexusStage -Recurse -Force
 Write-Host "nexus -> $nexusZip" -ForegroundColor Green

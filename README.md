@@ -182,11 +182,29 @@ pixi run package    # builds the installer ZIP
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE) for details. Third-party components bundled
+with or compiled into the mod are listed with their full licence texts in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+## Legal
+
+This is an unofficial, fan-made modification. It is not affiliated with,
+endorsed by, or sponsored by DICE, Electronic Arts, Epic Games, or any other
+rights holder. Mirror's Edge and all related names, logos and marks belong to
+their respective owners and are used here only to identify the game this mod
+applies to.
+
+The mod ships no game code, no game assets and no proprietary DLLs. It requires
+a legitimately purchased copy of the game, it bypasses no DRM or licence check,
+and it is single-player only. The engine structure offsets and function
+addresses in the source were measured by the authors from a legitimately owned
+copy; they are recorded as plain numbers, and no decompiled or disassembled game
+code is kept in this repository.
 
 ## Credits
 
 - DICE and EA for Mirror's Edge.
 - [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader) by ThirteenAG.
-- [MinHook](https://github.com/TsudaKageyu/minhook) by Tsuda Kageyu.
-- [OpenTrack](https://github.com/opentrack/opentrack).
+- [MinHook](https://github.com/TsudaKageyu/minhook) by Tsuda Kageyu, including the
+  Hacker Disassembler Engine by Vyacheslav Patkov.
+- [OpenTrack](https://github.com/opentrack/opentrack) for the UDP pose protocol.

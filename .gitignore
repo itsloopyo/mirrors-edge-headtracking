@@ -32,9 +32,20 @@ AGENTS.md
 # NexusMods page copy source (not shipped)
 NEXUS_MODS.md
 
-# Ghidra / RE scratch
+# Reverse-engineering scratch. RE work lives OUTSIDE this repo, under
+# C:\Data\re-workspace\mirrors-edge-headtracking\. A Ghidra project embeds the
+# full game image, and a decompiled listing is a derivative of it, so neither
+# may sit in the working tree where one `git add -f` would publish it.
 /re/
 *.gpr
 *.rep
 *.lock
 !pixi.lock
+
+# Game-owned binaries and assets. We redistribute no part of the game; these
+# patterns make an accidental commit impossible rather than merely unlikely.
+*.exe
+*.bik
+*.upk
+*.sfx
+*.tfc
