@@ -40,18 +40,11 @@ jobs:
           }
           Write-Host "Package created" -ForegroundColor Green
 
-      - name: Compute artifact name from ref
+      - name: Verify installer was produced
         shell: pwsh
         run: |
-          $branch = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { $env:GITHUB_REF_NAME }
-          $sanitized = $branch -replace '[^A-Za-z0-9._-]', '-'
-          "ARTIFACT_NAME=MirrorsEdgeHeadTracking-$sanitized" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v7 # v7.0.0
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: release/artifact-contents/
-          retention-days: 14
-          if-no-files-found: error
-          overwrite: true
+          $installer = Get-ChildItem "release/*-installer.zip" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $installer) {
+            Write-Host "::error::No installer ZIP was produced by the package step"
+            exit 1
+          }
