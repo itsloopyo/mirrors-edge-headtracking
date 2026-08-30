@@ -156,6 +156,14 @@ $cmakeText = Get-Content $cmakePath -Raw
 $cmakeText = $cmakeText -replace 'project\(MirrorsEdgeHeadTracking VERSION \d+\.\d+\.\d+', "project(MirrorsEdgeHeadTracking VERSION $target"
 Write-NoBom -Path $cmakePath -Text $cmakeText
 
+# install.cmd's MOD_VERSION is what the install writes into the launcher's
+# state file, which is where the launcher looks to spot a stale install.
+$installCmdPath = Join-Path $ProjectRoot 'scripts\install.cmd'
+$installCmdText = Get-Content $installCmdPath -Raw
+if ($installCmdText -notmatch 'set "MOD_VERSION=[^"]+"') { throw "MOD_VERSION line not found in $installCmdPath" }
+$installCmdText = $installCmdText -replace 'set "MOD_VERSION=[^"]+"', "set `"MOD_VERSION=$target`""
+Write-NoBom -Path $installCmdPath -Text $installCmdText
+
 # --- 5. Release-config build -------------------------------------------
 Write-Host "Building release configuration..." -ForegroundColor Cyan
 pixi run build
@@ -165,7 +173,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # --- 6. Commit the version bump + changelog ----------------------------
-git -C $ProjectRoot add src/version.h CMakeLists.txt CHANGELOG.md
+git -C $ProjectRoot add src/version.h CMakeLists.txt scripts/install.cmd CHANGELOG.md
 git -C $ProjectRoot commit -m "Release v$target"
 if ($LASTEXITCODE -ne 0) { Write-Error "git commit failed."; exit 1 }
 
