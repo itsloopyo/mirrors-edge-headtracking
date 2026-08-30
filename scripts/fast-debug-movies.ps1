@@ -20,8 +20,11 @@ $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 
 if (-not $GamePath) {
-    $games = Get-Content (Join-Path $root 'cameraunlock-core/data/games.json') -Raw | ConvertFrom-Json
-    $GamePath = 'C:\Program Files (x86)\Steam\steamapps\common\' + $games.games.'mirrors-edge'.steam_folder
+    # See deploy.ps1: the shared detector covers every Steam library, GOG and
+    # the MIRRORS_EDGE_PATH override, not just the default C: install.
+    Import-Module (Join-Path $root 'cameraunlock-core/powershell/GamePathDetection.psm1') -Force
+    $GamePath = Find-GamePath -GameId 'mirrors-edge'
+    if (-not $GamePath) { throw "Could not resolve Mirror's Edge install. Pass -GamePath." }
 }
 $movies = Join-Path $GamePath 'TdGame\Movies'
 if (-not (Test-Path $movies)) { throw "Movies folder not found: $movies" }
