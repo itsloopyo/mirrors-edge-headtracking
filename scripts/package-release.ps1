@@ -47,16 +47,18 @@ foreach ($doc in 'README.md','LICENSE','CHANGELOG.md','THIRD-PARTY-NOTICES.md') 
 }
 
 # launcher-manifest.json (manifest delivery mode) is committed at the repo root;
-# packaging stamps mod_info.version and the seeded INI so the shipped manifest can
-# never disagree with the built .asi or the default config that ships beside it.
+# packaging stamps mod_info.version so the shipped manifest can never disagree
+# with the built .asi. The seeded INI is not re-stamped: the committed manifest is
+# the authoritative copy of it, reviewable and in git where the blob inside the
+# ZIP is a build product, so drift fails the build instead of being papered over
+# in a staged copy that leaves the committed file stale.
 # Stamp via raw-text replacement, not a ConvertTo-Json round-trip: PowerShell 5.1's
 # ConvertTo-Json unwraps single-element arrays (seed), which corrupts the manifest.
 $manifestSrc = Join-Path $root 'launcher-manifest.json'
 if (-not (Test-Path $manifestSrc)) { throw "launcher-manifest.json not found at: $manifestSrc" }
-$iniB64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $root 'assets/MirrorsEdgeHeadTracking.ini')))
+Assert-ManifestSeedsMatchShipped -ManifestPath $manifestSrc -ProjectRoot $root
 $manifestText = Get-Content $manifestSrc -Raw
 $manifestText = $manifestText -replace '("version":\s*")[^"]*(")', "`${1}$version`${2}"
-$manifestText = $manifestText -replace '("content_b64":\s*")[^"]*(")', "`${1}$iniB64`${2}"
 [IO.File]::WriteAllText(
     (Join-Path $stage 'launcher-manifest.json'),
     $manifestText,
