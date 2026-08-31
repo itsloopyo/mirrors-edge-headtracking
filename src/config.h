@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include "cameraunlock/math/smoothing_utils.h"
+
 namespace meht {
 
 // Mod configuration, loaded from MirrorsEdgeHeadTracking.ini next to the game
@@ -38,8 +40,8 @@ struct Config {
     bool InvertRoll = false;
     // Which of the two applies is decided per connection from the packet source
     // address, and covers rotation and position alike.
-    float LocalSmoothing = 0.0f;
-    float RemoteSmoothing = 0.15f;
+    float LocalSmoothing = static_cast<float>(cameraunlock::math::kDefaultLocalSmoothing);
+    float RemoteSmoothing = static_cast<float>(cameraunlock::math::kDefaultRemoteSmoothing);
 
     // Position (6DOF). PositionEnabled selects the startup tracking mode: true =
     // rotation + position, false = rotation only. The Cycle Mode hotkey then
