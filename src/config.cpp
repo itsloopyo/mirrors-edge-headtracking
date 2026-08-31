@@ -42,7 +42,6 @@ void Config::Load(const std::string& iniPath) {
 
     const char* gen = "General";
     EnableOnStartup = ini.ReadBool(gen, "EnableOnStartup", EnableOnStartup);
-    AimDecoupling = ini.ReadBool(gen, "AimDecoupling", AimDecoupling);
     ShowReticle = ini.ReadBool(gen, "ShowReticle", ShowReticle);
     DataFreshnessMs = ini.ReadInt(gen, "DataFreshnessMs", DataFreshnessMs);
     WorldSpaceYaw = ini.ReadBool(gen, "WorldSpaceYaw", WorldSpaceYaw);

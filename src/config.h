@@ -16,7 +16,6 @@ struct Config {
 
     // Master
     bool EnableOnStartup = true;
-    bool AimDecoupling = true;
     bool ShowReticle = true;
     int DataFreshnessMs = 500;
     // Yaw mode: true = horizon-locked yaw about world up (default), false =

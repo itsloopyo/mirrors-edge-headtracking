@@ -128,8 +128,6 @@ Port=4242
 
 [General]
 EnableOnStartup=true
-; Head moves the view; mouse still aims. Leave on.
-AimDecoupling=true
 ShowReticle=true
 DataFreshnessMs=500
 

@@ -9,6 +9,8 @@
 #include <windows.h>
 
 #include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <string>
 #include <thread>
 
@@ -163,6 +165,17 @@ void LogFingerprint() {
     }
 }
 
+// True while the newest packet is younger than Config::DataFreshnessMs.
+bool IsPoseFresh() {
+    const std::int64_t lastUs = g_receiver.GetLastReceiveTimestamp();
+    if (lastUs == 0) {
+        return false;
+    }
+    const std::int64_t nowUs = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    return (nowUs - lastUs) / 1000 < g_config.DataFreshnessMs;
+}
+
 // Phase 1 stand-in for the per-frame render hook: polls the receiver, services
 // deferred actions, and logs connection transitions plus an occasional pose
 // sample so loader-presence and UDP both verify from the log.
@@ -200,7 +213,7 @@ void Phase1Loop() {
         // other smoothing parameter without restarting the game.
         g_session.Update(dt);
 
-        bool track = g_trackingEnabled.load() && connected && inGameplay;
+        bool track = g_trackingEnabled.load() && connected && IsPoseFresh() && inGameplay;
         camera_hook::SetEnabled(track);
         // Draw our reticle at the projected aim point only while tracking is
         // actively rotating the view; disabled, the game's own reticle shows.
@@ -266,9 +279,9 @@ void Start() {
 
     const std::string ini = ToUtf8(dir) + MEHT_MOD_NAME ".ini";
     g_config.Load(ini);
-    log::Line("[config] port=%u enableOnStartup=%d aimDecouple=%d localSmoothing=%.2f "
+    log::Line("[config] port=%u enableOnStartup=%d localSmoothing=%.2f "
               "remoteSmoothing=%.2f worldYaw=%d",
-              g_config.Port, g_config.EnableOnStartup, g_config.AimDecoupling,
+              g_config.Port, g_config.EnableOnStartup,
               g_config.LocalSmoothing, g_config.RemoteSmoothing, g_config.WorldSpaceYaw);
 
     // Remove the game's ~60 fps cap by disabling UE3's frame-rate smoother in the
