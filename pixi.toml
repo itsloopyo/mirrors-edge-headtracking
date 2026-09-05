@@ -19,6 +19,11 @@ uninstall = "cmd /c scripts\\uninstall.cmd /y"
 # update-deps is a deliberate dev action with a commit attached; no task
 # depends on it - build/package/release consume vendor/ as committed.
 update-deps = "powershell -ExecutionPolicy Bypass -File scripts/update-deps.ps1"
+
+# Strip the third-party DLLs the upstream x86 loader embeds as resources
+# (binkw32.dll, wndmode.dll, vorbisfile.dll). update-deps runs this already;
+# the task exists for a loader copied in by hand.
+strip-loader = "powershell -ExecutionPolicy Bypass -File scripts/strip-loader-payload.ps1 -Path vendor/ultimate-asi-loader/dinput8.dll"
 release = "powershell -ExecutionPolicy Bypass -File scripts/release.ps1"
 # Dev loop: disable/restore the game's Bink movies (logos, cutscenes, loading
 # screens) for faster launches. Use --restore to put them back.

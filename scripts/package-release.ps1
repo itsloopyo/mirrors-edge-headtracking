@@ -18,6 +18,13 @@ if (-not (Test-Path $asi)) { throw "Build output missing: $asi (run pixi run bui
 $loaderDll = Join-Path $root 'vendor/ultimate-asi-loader/dinput8.dll'
 if (-not (Test-Path $loaderDll)) { throw "Vendored ASI loader missing (run pixi run update-deps)" }
 
+# The installer ZIP redistributes that binary, and the upstream x86 loader
+# carries binkw32.dll (RAD Game Tools, proprietary), wndmode.dll and
+# vorbisfile.dll as RCDATA resources. None of the three is ours to ship, so a
+# loader that still has them never reaches a release. See
+# vendor/ultimate-asi-loader/README.md.
+& (Join-Path $PSScriptRoot 'strip-loader-payload.ps1') -Path $loaderDll -VerifyOnly
+
 $rel = Join-Path $root 'release'
 $stage = Join-Path $rel 'artifact-contents'
 Remove-Item $rel -Recurse -Force -ErrorAction SilentlyContinue

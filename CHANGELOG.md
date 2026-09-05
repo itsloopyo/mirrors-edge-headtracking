@@ -16,6 +16,23 @@ All notable changes to this project are documented here. Format follows
 - Position tuning config: `PositionScaleUU`, `InvertPositionX/Y/Z`.
 
 ### Changed
+- Strip the third-party DLLs Ultimate ASI Loader carries as resources out of
+  the vendored copy. The upstream 32-bit build embeds `binkw32.dll` (RAD Game
+  Tools' Bink and Smacker 1.994i, proprietary middleware licensed per title),
+  `wndmode.dll` (DirectX Windower Embedded, (C) 2008 VEG and (C) 2004 menopem,
+  no licence) and `vorbisfile.dll` (Xiph.Org, BSD-3-Clause) so that a user who
+  renames the loader over one of those libraries still gets the original
+  exports. The installer ZIP ships that binary, so it was redistributing all
+  three. `scripts/strip-loader-payload.ps1` now zeroes them, `pixi run
+  update-deps` runs it on every refresh, and `pixi run package` refuses to
+  build a ZIP from a loader that still has them. Only the `.rsrc` section
+  changes: the loader's code, imports, relocations and appended PDB are
+  byte-identical to upstream, and nothing in this mod could reach the stripped
+  resources anyway.
+- Correct `THIRD-PARTY-NOTICES.md`: the reproduced cameraunlock-core licence
+  named CameraUnlock as the copyright holder where core's own LICENSE names
+  itsloopyo, the pinned core commit had drifted from what the submodule points
+  at, and the vendored loader was described as taken from upstream untouched.
 - The mod keeps no centre of its own. Every tracker centres itself, so a mod
   centre was a second one in series with the tracker's: pressing Center in
   opentrack left the view parked at the negated drift. The `Home` hotkey, the
