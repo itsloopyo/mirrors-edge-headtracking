@@ -39,6 +39,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 if (-not (Test-Path $Path)) { throw "Loader not found: $Path" }
+# .NET resolves a relative path against the PROCESS working directory, which is
+# not PowerShell's current location. Pin it to one absolute path here: without
+# this, Test-Path can pass on the file you meant while ReadAllBytes reads a
+# different one, and the write below then lands on a third.
+$Path = (Resolve-Path -LiteralPath $Path).ProviderPath
 $bytes = [System.IO.File]::ReadAllBytes($Path)
 
 function Get-U16([byte[]]$b, [int]$o) { [BitConverter]::ToUInt16($b, $o) }
@@ -132,5 +137,5 @@ foreach ($p in $payloads) {
     $total += $p.Size
     Write-Host ("  stripped {0} at 0x{1:x} ({2:N0} bytes)" -f $p.What, $p.Offset, $p.Size) -ForegroundColor Yellow
 }
-[System.IO.File]::WriteAllBytes((Resolve-Path $Path).Path, $bytes)
+[System.IO.File]::WriteAllBytes($Path, $bytes)
 Write-Host ("  {0:N0} bytes of third-party payload removed from {1}" -f $total, (Split-Path $Path -Leaf)) -ForegroundColor Green
