@@ -10,7 +10,7 @@ An unofficial head tracking mod for Mirror's Edge that moves the view with your 
 
 - **Decoupled look and aim** - head tracking moves the camera while the mouse keeps controlling aim.
 - **6DOF positional tracking** - lean and peek by moving your head in space.
-- **No VR headset needed** - any OpenTrack source (webcam, IR rig, or phone app) works.
+- **Works with any OpenTrack compatible tracker** - free options available for PC, iOS and Android
 
 ## Requirements
 
