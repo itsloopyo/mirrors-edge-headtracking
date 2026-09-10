@@ -74,10 +74,8 @@ std::string ToUtf8(const std::wstring& w) {
     return s;
 }
 
-// Gameplay vs menu: a mouse-look FPS hides the OS cursor while you're playing and
-// shows it in the main menu / pause menu. Cursor hidden => gameplay. Fails open
-// (treat as gameplay) so a query failure never silently kills tracking.
 bool InGameplay() {
+    if (!camera_hook::IsPlayerView()) return false;
     CURSORINFO ci{};
     ci.cbSize = sizeof(ci);
     if (!GetCursorInfo(&ci)) return true;
@@ -182,6 +180,7 @@ bool IsPoseFresh() {
 void Phase1Loop() {
     bool wasConnected = false;
     bool wasInGameplay = false;
+    bool stateLogged = false;
     auto lastTick = std::chrono::steady_clock::now();
     auto lastBeat = lastTick;
     while (!g_stop.load()) {
@@ -202,10 +201,11 @@ void Phase1Loop() {
         // Drive the camera hook: run the full tracking pipeline and enable
         // injection only while tracking is on, data is live, and we're in gameplay
         bool inGameplay = InGameplay();
-        if (inGameplay != wasInGameplay) {
+        if (!stateLogged || inGameplay != wasInGameplay) {
             log::Line("[state] %s", inGameplay ? "gameplay (tracking active)"
                                                : "menu (tracking suppressed)");
             wasInGameplay = inGameplay;
+            stateLogged = true;
         }
 
         // Update() re-reads the receiver's connection locality every tick, so
@@ -275,7 +275,6 @@ void Start() {
     }
 
     cameraunlock::diagnostics::InstallCrashHandler();
-    LogFingerprint();
 
     const std::string ini = ToUtf8(dir) + MEHT_MOD_NAME ".ini";
     g_config.Load(ini);
@@ -284,10 +283,9 @@ void Start() {
               g_config.Port, g_config.EnableOnStartup,
               g_config.LocalSmoothing, g_config.RemoteSmoothing, g_config.WorldSpaceYaw);
 
-    // Remove the game's ~60 fps cap by disabling UE3's frame-rate smoother in the
-    // runtime TdEngine.ini. Done as early as possible so the write lands before the
-    // engine reads its config this launch. Independent of the camera build profile.
+    // Device probing can take long enough for the game to load its config.
     framerate::Init(g_config);
+    LogFingerprint();
 
     g_trackingEnabled.store(g_config.EnableOnStartup);
     camera_hook::SetWorldSpaceYaw(g_config.WorldSpaceYaw);

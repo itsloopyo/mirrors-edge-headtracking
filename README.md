@@ -132,12 +132,8 @@ ShowReticle=true
 DataFreshnessMs=500
 
 [Performance]
-; Removes the game's ~60 fps cap. Mirror's Edge pins itself near 60 via UE3's
-; frame-rate smoother, which the in-game V-Sync option does not affect; this
-; disables that smoother in the runtime TdEngine.ini so the frame rate is limited
-; only by your GPU. Note the game ties some physics/animation timing to frame
-; rate, so very high rates can introduce movement jank (that is the game, not the
-; mod). Set false to leave the game's cap alone.
+; Disables the game's frame-rate smoothing before camera and graphics setup.
+; Set false to leave TdEngine.ini unchanged.
 UnlockFrameRate=true
 
 [Rotation]

@@ -22,12 +22,7 @@ struct Config {
     // camera-local yaw about the camera's current up-axis. Runtime-toggleable.
     bool WorldSpaceYaw = true;
 
-    // Performance. The game pins itself near 60 fps via UE3's frame-rate smoother
-    // (bSmoothFrameRate / MaxSmoothedFrameRate in [Engine.GameEngine]), which the
-    // V-Sync option does not affect. When set, the mod disables that smoother in
-    // the runtime TdEngine.ini so the frame rate is limited only by the GPU. Note
-    // Mirror's Edge ties some physics/animation timing to frame rate; very high
-    // rates can introduce movement jank (this is the game, not the mod).
+    // Disables bSmoothFrameRate in the game's TdEngine.ini.
     bool UnlockFrameRate = true;
 
     // Rotation

@@ -5,6 +5,14 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep head tracking off on the main menu.
+- Move the reticle with the aim point when the HUD canvas is offset within the display.
+- Apply the frame-rate unlock before camera and graphics setup.
+
+- Fix a startup crash while the head tracking reticle is being initialised.
+
 ### Added
 - ASI-loader scaffold (Ultimate ASI Loader v9.7.2, dinput8 proxy, x86).
 - DllMain bootstrap: file logger, crash handler, PE-fingerprint build registry.

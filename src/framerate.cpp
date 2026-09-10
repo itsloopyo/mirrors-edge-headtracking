@@ -132,8 +132,7 @@ bool DisableSmoothFrameRate() {
         return false;
     }
     ofs.write(out.data(), static_cast<std::streamsize>(out.size()));
-    log::Line("[framerate] frame-rate cap removed (bSmoothFrameRate=False); "
-              "effective this launch, next launch at worst");
+    log::Line("[framerate] disabled frame-rate smoothing in TdEngine.ini (bSmoothFrameRate=False)");
     return true;
 }
 

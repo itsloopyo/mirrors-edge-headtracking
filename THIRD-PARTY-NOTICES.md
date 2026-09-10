@@ -17,7 +17,7 @@ Mirror's Edge.
 | MemoryModule | `5f83e41` (inside Ultimate ASI Loader v9.7.2) | MPL-2.0 | Compiled into the vendored dinput8.dll |
 | d3d8to9 | `65870f2` (inside Ultimate ASI Loader v9.7.2) | BSD-2-Clause | Compiled into the vendored dinput8.dll |
 | MinHook | v1.3.3 | BSD-2-Clause | Compiled into `MirrorsEdgeHeadTracking.asi` |
-| cameraunlock-core | 29b11b62f183183295d435b7292d8c1c0a8e5cff | MIT | Compiled into `MirrorsEdgeHeadTracking.asi` |
+| cameraunlock-core | fb55a6aa22306fc2ea7866bb39695b16df53c40a | MIT | Compiled into `MirrorsEdgeHeadTracking.asi` |
 | OpenTrack | n/a | ISC | Not bundled; UDP protocol interoperability only |
 
 ---
@@ -727,7 +727,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Git submodule at `cameraunlock-core/`, compiled into `MirrorsEdgeHeadTracking.asi`. Our own code,
 MIT licensed, reproduced here so the notices are complete.
 
-- Pinned commit: `29b11b62f183183295d435b7292d8c1c0a8e5cff`
+- Pinned commit: `fb55a6aa22306fc2ea7866bb39695b16df53c40a`
 
 ```
 MIT License

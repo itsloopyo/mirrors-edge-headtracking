@@ -4,6 +4,10 @@
 
 namespace meht::pov {
 
+constexpr std::uintptr_t kCameraOwnerOffset    = 0x1C0;
+constexpr std::uintptr_t kControllerPawnOffset = 0x1C0;
+constexpr std::uintptr_t kViewTargetOffset     = 0x4F0;
+
 // ACamera CameraCache / POV memory layout, shared by the probe (captures the
 // camera), the hook (injects the head delta), and the reticle projection (reads
 // the FOV). The FCameraCacheEntry begins at +0x4D0:

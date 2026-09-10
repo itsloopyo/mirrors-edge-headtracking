@@ -4,6 +4,8 @@
 
 namespace meht::camera_hook {
 
+bool IsPlayerView();
+
 // Installs the head-tracking injection by hooking UProperty::CopyCompleteValue
 // (the native the UE3 script VM uses to commit CameraCache.POV each frame). The
 // detour lets the game write its clean POV, then - when the copy targets the live

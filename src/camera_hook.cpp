@@ -42,6 +42,7 @@ CopyCompleteValueFn g_orig = nullptr;
 void* g_target = nullptr;
 
 std::atomic<bool> g_enabled{false};
+std::atomic<bool> g_playerView{false};
 // Horizon-locked (world-up) yaw by default; camera-local yaw when false.
 std::atomic<bool> g_worldYaw{true};
 std::atomic<int> g_yawUnits{0};
@@ -117,10 +118,24 @@ void __fastcall Detour(void* thisPtr, void* edx, void* dst, void* src,
         MaybeDiag(dst, src, camAddr, reinterpret_cast<std::uintptr_t>(_ReturnAddress()));
     }
 
-    if (!g_enabled.load()) return;
-
     auto dstAddr = reinterpret_cast<std::uintptr_t>(dst);
     if (dstAddr != camAddr + pov::kPovOffset && dstAddr != camAddr + pov::kCacheEntryOffset) return;
+
+    const auto owner = *reinterpret_cast<std::uintptr_t*>(camAddr + pov::kCameraOwnerOffset);
+    const auto pawn = owner ? *reinterpret_cast<std::uintptr_t*>(owner + pov::kControllerPawnOffset) : 0;
+    const auto target = *reinterpret_cast<std::uintptr_t*>(camAddr + pov::kViewTargetOffset);
+    // A populated pawn alone does not mean the camera is following it.
+    const bool playerView = pawn != 0 && target == pawn;
+    static bool viewLogged = false;
+    const bool wasPlayerView = g_playerView.exchange(playerView);
+    if (!viewLogged || wasPlayerView != playerView) {
+        log::Line("[camera] %s (owner=%p pawn=%p target=%p)",
+                  playerView ? "player view" : "non-player view",
+                  reinterpret_cast<void*>(owner), reinterpret_cast<void*>(pawn),
+                  reinterpret_cast<void*>(target));
+        viewLogged = true;
+    }
+    if (!playerView || !g_enabled.load()) return;
 
     // The game just wrote the clean POV; add the head rotation so only the
     // rendered view is rotated. Because the clean POV is rewritten every commit,
@@ -232,13 +247,15 @@ bool Install(std::uintptr_t moduleBase, std::uintptr_t copyCompleteValueRVA) {
 
 void SetEnabled(bool enabled) { g_enabled.store(enabled); }
 
+bool IsPlayerView() { return g_playerView.load(); }
+
 void SetWorldSpaceYaw(bool worldSpace) { g_worldYaw.store(worldSpace); }
 
 bool GetWorldSpaceYaw() { return g_worldYaw.load(); }
 
 bool GetPovState(int& cleanPitch, int& cleanYaw, int& cleanRoll,
                  int& deltaPitch, int& deltaYaw, int& deltaRoll) {
-    if (!g_havePov.load()) return false;
+    if (!g_playerView.load() || !g_havePov.load()) return false;
     cleanPitch = g_cleanPitch.load();
     cleanYaw = g_cleanYaw.load();
     cleanRoll = g_cleanRoll.load();
