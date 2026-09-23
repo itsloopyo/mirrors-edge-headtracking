@@ -20,6 +20,13 @@ An unofficial head tracking mod for Mirror's Edge that moves the view with your 
 
 ## Installation
 
+### Lopari
+
+Download [Lopari](https://lopari.app), choose **Mirror's Edge**, and click
+**Play with head tracking**.
+
+### Standalone Installer
+
 1. Download the latest installer ZIP from the [Releases](https://github.com/itsloopyo/mirrors-edge-headtracking/releases) page.
 2. Extract it anywhere.
 3. Double-click `install.cmd`. It auto-detects your Steam install and copies the loader and mod into the game's `Binaries` folder.
