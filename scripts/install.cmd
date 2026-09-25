@@ -18,6 +18,10 @@ set "MOD_VERSION=0.0.0"
 set "STATE_FILE=.headtracking-state.json"
 set "FRAMEWORK_TYPE=ASILoader"
 set "ASI_LOADER_NAME=dinput8.dll"
+:: Files copied only when they are not already there, so an upgrade keeps
+:: whatever the user tuned. Listing an .ini in MOD_DLLS instead puts it through
+:: the unconditional copy and resets every key on every update.
+set "MOD_SEED_FILES="
 set "MOD_CONTROLS=Controls: End / Ctrl+Shift+Y = toggle tracking, PageUp / Ctrl+Shift+G = toggle 6DOF position, PageDown / Ctrl+Shift+H = toggle yaw mode."
 :: --- END CONFIG BLOCK ---
 
